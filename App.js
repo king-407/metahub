@@ -28,12 +28,25 @@ import {
 const App = () => {
   const [text, setText] = useState('');
   const [list, setList] = useState('');
+  const [isupdated, setUpdated] = useState(null);
+  const [cardIndex, setCardIndex] = useState('');
 
   // const [my, set] = useState('');
   useEffect(() => {
     getDatabase();
   }, []);
   // const [data, setData] = useState('');
+  const change = async () => {
+    try {
+      const response = await database()
+        .ref(`todo/${cardIndex}`)
+        .update({value: text});
+      setUpdated(null);
+      setText('');
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const getDatabase = async () => {
     try {
       //const data = await database().ref('todo').once('value');
@@ -48,11 +61,17 @@ const App = () => {
   };
   const handle = async () => {
     try {
-      const response = await database().ref('todo/5').set({
+      const index = list.length;
+      const response = await database().ref(`todo/${index}`).set({
         value: text,
       });
     } catch {}
     setText('');
+  };
+  const seeUpdate = (index, value) => {
+    setCardIndex(index);
+    setUpdated(true);
+    setText(value);
   };
   return (
     <View style={styles.container}>
@@ -65,9 +84,15 @@ const App = () => {
           onChangeText={value => setText(value)}></TextInput>
       </View>
       <View style={styles.buttonArea}>
-        <TouchableOpacity style={styles.button} onPress={handle}>
-          <Text style={styles.butt}>Add</Text>
-        </TouchableOpacity>
+        {!isupdated ? (
+          <TouchableOpacity style={styles.button} onPress={handle}>
+            <Text style={styles.butt}>Add</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={change}>
+            <Text style={styles.butt}>Update</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.cardContainer}>
@@ -76,9 +101,14 @@ const App = () => {
           data={list}
           renderItem={oye => {
             if (oye.item !== null) {
+              console.log(oye);
               return (
                 <View style={styles.card}>
-                  <Text style={styles.cardText}>{oye.item.value}</Text>
+                  <TouchableOpacity
+                    style={styles.cardText}
+                    onPress={() => seeUpdate(oye.index, oye.item.value)}>
+                    <Text>{oye.item.value}</Text>
+                  </TouchableOpacity>
                 </View>
               );
             }
